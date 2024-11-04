@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, 
+from sqlalchemy import Column, Integer, String, Float
 from database import Base
 
 class Client(Base):
