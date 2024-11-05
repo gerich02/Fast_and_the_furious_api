@@ -9,7 +9,7 @@ from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from schemas.client import Token
 from database import get_db
-import os
+
 
 router = APIRouter()
 

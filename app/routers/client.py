@@ -59,6 +59,7 @@ async def delete(
         )
     return ClientService.remove(id, db)
 
+
 @router.post("/clients/{id}/match", tags=["match"])
 async def match(
     id: int,

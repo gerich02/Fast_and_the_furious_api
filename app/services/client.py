@@ -116,12 +116,12 @@ def remove(id: int, db: Session):
     return {"message": "Клиент успешно удален."}
 
 
-
 def send_email_mock(subject: str, body: str, recipient: str):
     print(f"Отправка письма на {recipient}")
     print(f"Тема: {subject}")
     print(f"Сообщение: {body}")
     print("-" * 50)
+
 
 def matching(matcher_id: int, matched_id: int, db: Session):
     matcher_match = db.query(Match).filter(
@@ -151,10 +151,20 @@ def matching(matcher_id: int, matched_id: int, db: Session):
         matcher_user = db.query(Client).filter(Client.id == matcher_id).first()
         matched_user = db.query(Client).filter(Client.id == matched_id).first()
         subject = "Взаимная симпатия!"
-        body_matcher = f"Вы понравились {matched_user.name}! Почта участника: {matched_user.mail}"
+        body_matcher = (
+            f"Вы понравились {matched_user.name}!"
+            f"  Почта участника: {matched_user.mail}"
+        )
         send_email_mock(subject, body_matcher, matcher_user.mail)
-        body_matched = f"Вы понравились {matcher_user.name}! Почта участника: {matcher_user.mail}"
+        body_matched = (
+            f"Вы понравились {matcher_user.name}!"
+            f" Почта участника: {matcher_user.mail}"
+        )
         send_email_mock(subject, body_matched, matched_user.mail)
-        return {"message": f"Взаимная симпатия! Почта участника: {matched_user.mail}"}
-
+        return {
+            "message": (
+                f"Взаимная симпатия! "
+                f"Почта участника: {matched_user.mail}"
+            )
+        }
     return {"message": "Ошибка при обработке запроса."}

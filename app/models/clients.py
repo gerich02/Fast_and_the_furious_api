@@ -16,6 +16,7 @@ class Client(Base):
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
 
+
 class Match(Base):
     __tablename__ = "matches"
 
@@ -23,4 +24,3 @@ class Match(Base):
     matcher = Column(Integer, index=True)
     matched = Column(Integer, index=True)
     date = Column(Date, default=func.current_date())
-
