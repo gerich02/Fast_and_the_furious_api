@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Float, Integer, String
+from sqlalchemy import Column, Float, Integer, String, Date, func
 
 from database import Base
 
@@ -15,3 +15,12 @@ class Client(Base):
     profile_pic = Column(String, nullable=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
+
+class Match(Base):
+    __tablename__ = "matches"
+
+    id = Column(Integer, primary_key=True, index=True)
+    matcher = Column(Integer, index=True)
+    matched = Column(Integer, index=True)
+    date = Column(Date, default=func.current_date())
+

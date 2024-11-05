@@ -2,10 +2,11 @@ import os
 import shutil
 import uuid
 from fastapi import UploadFile, BackgroundTasks
+from sqlalchemy import and_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from models.clients import Client
+from models.clients import Client, Match
 from schemas import client
 from PIL import Image
 
@@ -113,3 +114,47 @@ def remove(id: int, db: Session):
     db.delete(client)
     db.commit()
     return {"message": "Клиент успешно удален."}
+
+
+
+def send_email_mock(subject: str, body: str, recipient: str):
+    print(f"Отправка письма на {recipient}")
+    print(f"Тема: {subject}")
+    print(f"Сообщение: {body}")
+    print("-" * 50)
+
+def matching(matcher_id: int, matched_id: int, db: Session):
+    matcher_match = db.query(Match).filter(
+        and_(Match.matcher == matcher_id, Match.matched == matched_id)
+    ).first()
+    matched_match = db.query(Match).filter(
+        and_(Match.matcher == matched_id, Match.matched == matcher_id)
+    ).first()
+    if matcher_match:
+        return {"message": "Вы уже голосовали за этого человека."}
+    elif not matcher_match and not matched_match:
+        matcher_match = Match(
+            matcher=matcher_id,
+            matched=matched_id
+        )
+        db.add(matcher_match)
+        db.commit()
+        db.refresh(matcher_match)
+    else:
+        matcher_match = Match(
+            matcher=matcher_id,
+            matched=matched_id
+        )
+        db.add(matcher_match)
+        db.commit()
+        db.refresh(matcher_match)
+        matcher_user = db.query(Client).filter(Client.id == matcher_id).first()
+        matched_user = db.query(Client).filter(Client.id == matched_id).first()
+        subject = "Взаимная симпатия!"
+        body_matcher = f"Вы понравились {matched_user.name}! Почта участника: {matched_user.mail}"
+        send_email_mock(subject, body_matcher, matcher_user.mail)
+        body_matched = f"Вы понравились {matcher_user.name}! Почта участника: {matcher_user.mail}"
+        send_email_mock(subject, body_matched, matched_user.mail)
+        return {"message": f"Взаимная симпатия! Почта участника: {matched_user.mail}"}
+
+    return {"message": "Ошибка при обработке запроса."}

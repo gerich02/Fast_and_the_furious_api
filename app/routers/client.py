@@ -7,6 +7,7 @@ from schemas import client as ClientSchemas
 from services import client as ClientService
 from auth.auth import get_current_user
 from starlette import status
+
 router = APIRouter()
 user_dependency = Annotated[dict, Depends(get_current_user)]
 
@@ -57,3 +58,23 @@ async def delete(
             detail="Не разрешено удалять этого клиента"
         )
     return ClientService.remove(id, db)
+
+@router.post("/clients/{id}/match", tags=["match"])
+async def match(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    matched = ClientService.get_client(id, db)
+    matcher = current_user
+    if not matcher:
+        raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='Авторизируйтесь, чтобы голосовать!'
+                    )
+    if matcher['id'] == matched.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Запрещено голосовать за самого себя!"
+        )
+    return ClientService.matching(matcher['id'], matched.id, db)
