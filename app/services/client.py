@@ -5,7 +5,7 @@ from fastapi import UploadFile, BackgroundTasks
 from sqlalchemy import and_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-
+from datetime import date
 from models.clients import Client, Match
 from schemas import client
 from PIL import Image
@@ -123,7 +123,19 @@ def send_email_mock(subject: str, body: str, recipient: str):
     print("-" * 50)
 
 
+LIMIT_PER_DAY = 1
+
+
 def matching(matcher_id: int, matched_id: int, db: Session):
+    today = date.today()
+    match_today = db.query(Match).filter(
+        Match.matcher == matcher_id,
+        Match.date == today
+    ).count()
+    if match_today >= LIMIT_PER_DAY:
+        return {
+            "message": f"Вы достигли лимита на {LIMIT_PER_DAY} оценок в день."
+        }
     matcher_match = db.query(Match).filter(
         and_(Match.matcher == matcher_id, Match.matched == matched_id)
     ).first()
