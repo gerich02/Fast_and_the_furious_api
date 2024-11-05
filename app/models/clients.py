@@ -1,5 +1,7 @@
-from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy import Column, Float, Integer, String
+
 from database import Base
+
 
 class Client(Base):
     __tablename__ = 'clients'
