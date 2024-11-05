@@ -6,9 +6,14 @@ class Client(BaseModel):
     password: str
     name: str
     last_name: str
+    hashed_password: str
     sex: str
     latitude: float
     longitude: float
+
+    class Config:
+        orm_mode = True
+        exclude = {"hashed_password"}
 
 
 class Token(BaseModel):

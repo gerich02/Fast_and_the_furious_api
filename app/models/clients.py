@@ -15,6 +15,7 @@ class Client(Base):
     profile_pic = Column(String, nullable=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
+    registration_date = Column(Date, default=func.current_date())
 
 
 class Match(Base):

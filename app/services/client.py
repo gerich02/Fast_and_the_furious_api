@@ -12,16 +12,16 @@ from PIL import Image
 
 from passlib.context import CryptContext
 
-bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
+bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def add_watermark(image_path: str, watermark_path: str):
     original_image = Image.open(image_path)
     watermark = Image.open(watermark_path)
-    if original_image.mode == 'RGBA':
-        original_image = original_image.convert('RGB')
+    if original_image.mode == "RGBA":
+        original_image = original_image.convert("RGB")
     original_image.paste(watermark, (0, 0), watermark)
-    original_image.save(image_path, format='JPEG')
+    original_image.save(image_path, format="JPEG")
 
 
 def create_client(
@@ -59,6 +59,31 @@ def get_client(id: int, db):
     return db.query(Client).filter(Client.id == id).first()
 
 
+def get_all_clients(
+    db,
+    sex: str = None,
+    name: str = None,
+    last_name: str = None,
+    start_date: date = None,
+    end_date: date = None,
+    sort_by: str = None,
+):
+    query = db.query(Client)
+    if sex:
+        query = query.filter(Client.sex == sex)
+    if name:
+        query = query.filter(Client.name.ilike(f"%{name}%"))
+    if last_name:
+        query = query.filter(Client.last_name.ilike(f"%{last_name}%"))
+    if start_date:
+        query = query.filter(Client.registration_date >= start_date)
+    if end_date:
+        query = query.filter(Client.registration_date <= end_date)
+    if sort_by == "registration_date":
+        query = query.order_by(Client.registration_date)
+    return query.all()
+
+
 def update(
     profile_pic: UploadFile,
     id: int,
@@ -78,19 +103,12 @@ def update(
     if profile_pic:
         if os.path.exists(client.profile_pic):
             os.remove(client.profile_pic)
-        profile_pic.filename = (
-            f"{uuid.uuid4().hex}"
-            f"{profile_pic.filename.lower()}"
-        )
+        profile_pic.filename = f"{uuid.uuid4().hex}" f"{profile_pic.filename.lower()}"
         path = os.path.join("static", profile_pic.filename)
         try:
             with open(path, "wb+") as buffer:
                 shutil.copyfileobj(profile_pic.file, buffer)
-            background_tasks.add_task(
-                add_watermark,
-                path,
-                "static/watermark.png"
-            )
+            background_tasks.add_task(add_watermark, path, "static/watermark.png")
             client.profile_pic = path
         except Exception as e:
             print("Ошибка при сохранении профиля:", e)
@@ -128,35 +146,30 @@ LIMIT_PER_DAY = 1
 
 def matching(matcher_id: int, matched_id: int, db: Session):
     today = date.today()
-    match_today = db.query(Match).filter(
-        Match.matcher == matcher_id,
-        Match.date == today
-    ).count()
+    match_today = (
+        db.query(Match).filter(Match.matcher == matcher_id, Match.date == today).count()
+    )
     if match_today >= LIMIT_PER_DAY:
-        return {
-            "message": f"Вы достигли лимита на {LIMIT_PER_DAY} оценок в день."
-        }
-    matcher_match = db.query(Match).filter(
-        and_(Match.matcher == matcher_id, Match.matched == matched_id)
-    ).first()
-    matched_match = db.query(Match).filter(
-        and_(Match.matcher == matched_id, Match.matched == matcher_id)
-    ).first()
+        return {"message": f"Вы достигли лимита на {LIMIT_PER_DAY} оценок в день."}
+    matcher_match = (
+        db.query(Match)
+        .filter(and_(Match.matcher == matcher_id, Match.matched == matched_id))
+        .first()
+    )
+    matched_match = (
+        db.query(Match)
+        .filter(and_(Match.matcher == matched_id, Match.matched == matcher_id))
+        .first()
+    )
     if matcher_match:
         return {"message": "Вы уже голосовали за этого человека."}
     elif not matcher_match and not matched_match:
-        matcher_match = Match(
-            matcher=matcher_id,
-            matched=matched_id
-        )
+        matcher_match = Match(matcher=matcher_id, matched=matched_id)
         db.add(matcher_match)
         db.commit()
         db.refresh(matcher_match)
     else:
-        matcher_match = Match(
-            matcher=matcher_id,
-            matched=matched_id
-        )
+        matcher_match = Match(matcher=matcher_id, matched=matched_id)
         db.add(matcher_match)
         db.commit()
         db.refresh(matcher_match)
@@ -174,9 +187,6 @@ def matching(matcher_id: int, matched_id: int, db: Session):
         )
         send_email_mock(subject, body_matched, matched_user.mail)
         return {
-            "message": (
-                f"Взаимная симпатия! "
-                f"Почта участника: {matched_user.mail}"
-            )
+            "message": (f"Взаимная симпатия! " f"Почта участника: {matched_user.mail}")
         }
     return {"message": "Ошибка при обработке запроса."}
