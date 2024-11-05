@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from models.clients import Client
 from schemas import client
+from PIL import Image
 
 
 def create_client(
@@ -14,10 +15,14 @@ def create_client(
     db: Session,
     profile_pic: UploadFile
 ):
-    profile_pic.filename = f"{uuid.uuid4().hex}{profile_pic.filename.lower()}"
+    profile_pic.filename = f"{uuid.uuid4().hex}_{profile_pic.filename.lower()}"
     path = os.path.join('static', profile_pic.filename)
     with open(path, 'wb+') as buffer:
         shutil.copyfileobj(profile_pic.file, buffer)
+    original_image = Image.open(path)
+    watermark = Image.open('static/watermark.png').convert("RGBA")
+    original_image.paste(watermark, (0, 0), watermark)
+    original_image.save(path)
     client = Client(
         name=data.name,
         last_name=data.last_name,
@@ -52,12 +57,17 @@ def update(profile_pic: UploadFile, id: int, data: client.Client, db: Session):
     client.latitude = data.latitude
     client.longitude = data.longitude
     if profile_pic:
+        os.remove(client.profile_pic)
         profile_pic.filename = (
                             f"{uuid.uuid4().hex}{profile_pic.filename.lower()}"
                         )
         path = os.path.join('static', profile_pic.filename)
         with open(path, 'wb+') as buffer:
             shutil.copyfileobj(profile_pic.file, buffer)
+        original_image = Image.open(path)
+        watermark = Image.open('static/watermark.png').convert("RGBA")
+        original_image.paste(watermark, (0, 0), watermark)
+        original_image.save(path)
         client.profile_pic = path
     try:
         db.commit()
