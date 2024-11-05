@@ -1,6 +1,6 @@
 import os
 import shutil
-
+import uuid
 from fastapi import UploadFile
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -14,7 +14,7 @@ def create_client(
     db: Session,
     profile_pic: UploadFile
 ):
-    profile_pic.filename = profile_pic.filename.lower()
+    profile_pic.filename = f"{uuid.uuid4().hex}{profile_pic.filename.lower()}"
     path = os.path.join('static', profile_pic.filename)
     with open(path, 'wb+') as buffer:
         shutil.copyfileobj(profile_pic.file, buffer)
@@ -52,7 +52,9 @@ def update(profile_pic: UploadFile, id: int, data: client.Client, db: Session):
     client.latitude = data.latitude
     client.longitude = data.longitude
     if profile_pic:
-        profile_pic.filename = profile_pic.filename.lower()
+        profile_pic.filename = (
+                            f"{uuid.uuid4().hex}{profile_pic.filename.lower()}"
+                        )
         path = os.path.join('static', profile_pic.filename)
         with open(path, 'wb+') as buffer:
             shutil.copyfileobj(profile_pic.file, buffer)
