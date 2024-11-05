@@ -9,6 +9,10 @@ from models.clients import Client
 from schemas import client
 from PIL import Image
 
+from passlib.context import CryptContext
+
+bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
+
 
 def add_watermark(image_path: str, watermark_path: str):
     original_image = Image.open(image_path)
@@ -31,10 +35,11 @@ def create_client(
         shutil.copyfileobj(profile_pic.file, buffer)
     background_tasks.add_task(add_watermark, path, "static/watermark.png")
     client = Client(
+        mail=data.mail,
+        hashed_password=bcrypt_context.hash(data.password),
         name=data.name,
         last_name=data.last_name,
         sex=data.sex,
-        mail=data.mail,
         profile_pic=path,
         latitude=data.latitude,
         longitude=data.longitude,

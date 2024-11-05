@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends, File, BackgroundTasks, UploadFile
+from fastapi import (APIRouter, Depends, File, BackgroundTasks,
+                     UploadFile, HTTPException)
 from sqlalchemy.orm import Session
-
+from typing import Annotated
 from database import get_db
 from schemas import client as ClientSchemas
 from services import client as ClientService
-
-
+from auth.auth import get_current_user
+from starlette import status
 router = APIRouter()
+user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 @router.post("/clients/create", tags=["Client"])
@@ -31,10 +33,27 @@ async def update(
     db: Session = Depends(get_db),
     profile_pic: UploadFile = File(...),
     background_tasks: BackgroundTasks = BackgroundTasks(),
+    current_user: dict = Depends(get_current_user)
 ):
+    client = ClientService.get_client(id, db)
+    if client.id != current_user['id']:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Не разрешено обновлять этого клиента"
+        )
     return ClientService.update(profile_pic, id, data, db, background_tasks)
 
 
 @router.delete("/clients/{id}", tags=["Client"])
-async def delete(id: int = None, db: Session = Depends(get_db)):
+async def delete(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    client = ClientService.get_client(id, db)
+    if client.id != current_user['id']:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Не разрешено удалять этого клиента"
+        )
     return ClientService.remove(id, db)
