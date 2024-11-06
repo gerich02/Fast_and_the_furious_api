@@ -24,6 +24,9 @@ bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def add_watermark(image_path: str, watermark_path: str):
+    """
+    Добавляет водяной знак к изображению.
+    """
     original_image = Image.open(image_path)
     watermark = Image.open(watermark_path)
     if original_image.mode == "RGBA":
@@ -38,6 +41,9 @@ def create_client(
     profile_pic: UploadFile,
     background_tasks: BackgroundTasks,
 ):
+    """
+    Создаёт нового клиента и добавляет водяной знак к фото профиля.
+    """
     profile_pic.filename = f"{uuid.uuid4().hex}_{profile_pic.filename.lower()}"
     path = os.path.join("static", profile_pic.filename)
     with open(path, "wb+") as buffer:
@@ -64,6 +70,9 @@ def create_client(
 
 
 def get_client(id: int, db):
+    """
+    Получает клиента по ID.
+    """
     client = db.query(Client).filter(Client.id == id).first()
     if client is None:
         raise HTTPException(
@@ -74,6 +83,13 @@ def get_client(id: int, db):
 
 @lru_cache(maxsize=1000)
 def great_circle_distance(lat1, lon1, lat2, lon2):
+    """
+    Вычисляет расстояние между двумя точками по их координатам.
+
+    Параметры:
+    - lat1, lon1 (float): Широта и долгота первой точки.
+    - lat2, lon2 (float): Широта и долгота второй точки.
+    """
     lat1_rad = math.radians(lat1)
     lon1_rad = math.radians(lon1)
     lat2_rad = math.radians(lat2)
@@ -103,6 +119,9 @@ def get_all_clients(
     latitude: float = None,
     sort_by: str = None,
 ):
+    """
+    Получает всех клиентов с возможностью фильтрации и сортировки.
+    """
     query = db.query(Client)
     if sex:
         query = query.filter(Client.sex == sex)
@@ -142,6 +161,9 @@ def update(
     db: Session,
     background_tasks: BackgroundTasks,
 ):
+    """
+    Обновляет информацию о клиенте, включая изображение профиля.
+    """
     client = db.query(Client).filter(Client.id == id).first()
     if not client:
         return {"error": "Клиент не найден."}
@@ -190,6 +212,9 @@ def update(
 
 
 def remove(id: int, db: Session):
+    """
+    Удаляет клиента и его фото профиля.
+    """
     client = db.query(Client).filter(Client.id == id).first()
     if not client:
         return {"error": "Клиент не найден."}
@@ -201,6 +226,9 @@ def remove(id: int, db: Session):
 
 
 def send_email_mock(subject: str, body: str, recipient: str):
+    """
+    Имитирует отправку электронного письма.
+    """
     print(f"Отправка письма на {recipient}")
     print(f"Тема: {subject}")
     print(f"Сообщение: {body}")
@@ -208,6 +236,9 @@ def send_email_mock(subject: str, body: str, recipient: str):
 
 
 def matching(matcher_id: int, matched_id: int, db: Session):
+    """
+    Обрабатывает голосование за симпатию и проверяет наличие взаимности.
+    """
     today = date.today()
     match_today = (
         db.query(Match).filter(

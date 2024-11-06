@@ -3,6 +3,9 @@ from sqlalchemy import Column, Date, Float, Integer, String, func
 
 
 class Client(Base):
+    """
+    Модель таблицы `clients` для хранения информации о клиентах.
+    """
     __tablename__ = "clients"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -18,6 +21,9 @@ class Client(Base):
 
 
 class Match(Base):
+    """
+    Модель таблицы `matches` для хранения информации голосовании.
+    """
     __tablename__ = "matches"
 
     id = Column(Integer, primary_key=True, index=True)

@@ -6,6 +6,18 @@ from pydantic import BaseModel, ConfigDict
 
 
 class Client(BaseModel):
+    """
+    Модель данных для создания клиента.
+
+    Атрибуты:
+    - mail (str): Электронная почта клиента.
+    - password (str): Пароль клиента.
+    - name (str): Имя клиента.
+    - last_name (str): Фамилия клиента.
+    - sex (str): Пол клиента.
+    - latitude (float): Широта местоположения клиента.
+    - longitude (float): Долгота местоположения клиента.
+    """
     mail: str
     password: str
     name: str
@@ -25,6 +37,9 @@ class Client(BaseModel):
         latitude: float = Form(...),
         longitude: float = Form(...),
     ):
+        """
+        Метод для передачи параметров через форму в формате FastAPI.
+        """
         return cls(
             mail=mail,
             password=password,
@@ -37,6 +52,20 @@ class Client(BaseModel):
 
 
 class ClientResponse(BaseModel):
+    """
+    Модель данных для ответа с информацией о клиенте.
+
+    Атрибуты:
+    - id (int): Идентификатор клиента.
+    - mail (Optional[str]): Электронная почта клиента.
+    - sex (Optional[str]): Пол клиента.
+    - name (Optional[str]): Имя клиента.
+    - last_name (Optional[str]): Фамилия клиента.
+    - latitude (Optional[float]): Широта местоположения клиента.
+    - longitude (Optional[float]): Долгота местоположения клиента.
+    - registration_date (Optional[date]): Дата регистрации клиента.
+    - profile_pic (Optional[str]): Путь к изображению профиля клиента.
+    """
     id: int
     mail: Optional[str] = None
     sex: Optional[str] = None
@@ -51,6 +80,18 @@ class ClientResponse(BaseModel):
 
 
 class ClientUpdate(BaseModel):
+    """
+    Модель данных для обновления информации о клиенте.
+
+    Атрибуты:
+    - mail (Optional[str]): Новая электронная почта клиента.
+    - password (Optional[str]): Новый пароль клиента.
+    - name (Optional[str]): Новое имя клиента.
+    - last_name (Optional[str]): Новая фамилия клиента.
+    - sex (Optional[str]): Новый пол клиента.
+    - latitude (Optional[float]): Новая широта местоположения клиента.
+    - longitude (Optional[float]): Новая долгота местоположения клиента.
+    """
     mail: Optional[str] = None
     password: Optional[str] = None
     name: Optional[str] = None
@@ -69,7 +110,10 @@ class ClientUpdate(BaseModel):
         sex: Optional[str] = Form(None),
         latitude: Optional[float] = Form(None),
         longitude: Optional[float] = Form(None),
-    ) -> "ClientUpdate":
+    ):
+        """
+        Метод для передачи параметров через форму в формате FastAPI.
+        """
         return cls(
             mail=mail,
             password=password,
@@ -82,5 +126,12 @@ class ClientUpdate(BaseModel):
 
 
 class Token(BaseModel):
+    """
+    Модель данных для токена аутентификации.
+
+    Атрибуты:
+    - access_token (str): Токен доступа.
+    - token_type (str): Тип токена.
+    """
     access_token: str
     token_type: str

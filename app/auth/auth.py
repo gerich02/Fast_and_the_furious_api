@@ -32,6 +32,9 @@ async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: db_dependency
 ):
+    """
+    Аутентификация и получение токена.
+    """
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(
@@ -43,6 +46,9 @@ async def login(
 
 
 def authenticate_user(mail: str, password: str, db):
+    """
+    Аутентифицирует пользователя на основе почты и пароля.
+    """
     user = db.query(Client).filter(Client.mail == mail).first()
     if not user:
         return False
@@ -52,6 +58,9 @@ def authenticate_user(mail: str, password: str, db):
 
 
 def create_access_token(mail: str, user_id: int, expires_delta: timedelta):
+    """
+    Создает JWT токен доступа с указанным сроком действия.
+    """
     encode = {"sub": mail, "id": user_id}
     expires = datetime.now() + expires_delta
     encode.update({"exp": expires})
@@ -59,6 +68,9 @@ def create_access_token(mail: str, user_id: int, expires_delta: timedelta):
 
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
+    """
+    Извлекает текущего пользователя из JWT токена.
+    """
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
         mail: str = payload.get("sub")
