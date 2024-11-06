@@ -21,11 +21,21 @@ async def create(
     db: Session = Depends(get_db),
     background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
+    """
+    Создает нового клиента.
+
+    **Тело запроса**:
+    - `data`: Данные клиента (имя, фамилия, почта, и т. д.)
+    - `profile_pic`: Файл изображения профиля клиента
+    """
     return ClientService.create_client(data, db, profile_pic, background_tasks)
 
 
 @router.get("/clients/{id}", tags=["Client"])
 async def get(id: int, db: Session = Depends(get_db)):
+    """
+    Получить информацию о клиенте по ID.
+    """
     return ClientService.get_client(id, db)
 
 
@@ -40,6 +50,12 @@ async def update(
     current_user: dict = Depends(get_current_user),
     background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
+    """
+    Обновить данные клиента.
+    **Тело запроса**:
+    - `data`: Новые данные клиента (имя, фамилия и т. д.)
+    - `profile_pic`: (Опционально) Новый файл изображения профиля
+    """
     client = ClientService.get_client(id, db)
     if client.id != current_user["id"]:
         raise HTTPException(
@@ -55,6 +71,9 @@ async def delete(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
+    """
+    Удалить клиента.
+    """
     client = ClientService.get_client(id, db)
     if client.id != current_user["id"]:
         raise HTTPException(
@@ -62,27 +81,6 @@ async def delete(
             detail="Не разрешено удалять этого клиента",
         )
     return ClientService.remove(id, db)
-
-
-@router.post("/clients/{id}/match", tags=["Match"])
-async def match(
-    id: int,
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
-):
-    matched = ClientService.get_client(id, db)
-    matcher = current_user
-    if not matcher:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Авторизируйтесь, чтобы голосовать!",
-        )
-    if matcher["id"] == matched.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Запрещено голосовать за самого себя!",
-        )
-    return ClientService.matching(matcher["id"], matched.id, db)
 
 
 @router.get("/clients", tags=["Client"])
@@ -97,6 +95,17 @@ def get_clients(
     distance: Optional[int] = None,
     sort_by: Optional[str] = None,
 ):
+    """
+    Получить список клиентов.
+
+    **Параметры**:
+    - `sex`: Пол клиента (опционально)
+    - `name`: Имя клиента (опционально)
+    - `last_name`: Фамилия клиента (опционально)
+    - `start_date`, `end_date`: Фильтр по дате регистрации
+    - `distance`: Фильтр поиска по расстоянию до клиента
+    - `sort_by`: Параметр для сортировки списка клиентов
+    """
     longitude, latitude = None, None
     if current_user and distance is not None:
         user = ClientService.get_client(current_user["id"], db)
@@ -115,3 +124,30 @@ def get_clients(
         latitude,
         sort_by,
     )
+
+
+@router.post("/clients/{id}/match", tags=["Match"])
+async def match(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Оценить другого клиента.
+
+    **Тело запроса**:
+    - `id`: ID клиента, которого оценивает текущий пользователь
+    """
+    matched = ClientService.get_client(id, db)
+    matcher = current_user
+    if not matcher:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Авторизируйтесь, чтобы голосовать!",
+        )
+    if matcher["id"] == matched.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Запрещено голосовать за самого себя!",
+        )
+    return ClientService.matching(matcher["id"], matched.id, db)
