@@ -1,20 +1,25 @@
-from datetime import timedelta, datetime
+import os
+from datetime import datetime, timedelta
 from typing import Annotated
+
+from database import get_db
+from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from starlette import status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jose import JWTError, jwt
 from models.clients import Client
 from passlib.context import CryptContext
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from jose import jwt, JWTError
 from schemas.client import Token
-from database import get_db
+from sqlalchemy.orm import Session
+from starlette import status
 
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = "HS256"
 
 router = APIRouter()
 
-SECRET_KEY = "kFUw7S2U5NCuKOHnSXNH9GJ847JiYgaD24_cvjfYT_4"
-ALGORITHM = "HS256"
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="auth/token")
@@ -22,14 +27,16 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl="auth/token")
 db_dependency = Annotated[Session, Depends(get_db)]
 
 
-@router.post("/token", response_model=Token)
+@router.post("/token", response_model=Token, tags=["Authentication"])
 async def login(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: db_dependency
 ):
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Вы ввели неверные данные"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Вы ввели неверные данные"
         )
     token = create_access_token(user.mail, user.id, timedelta(minutes=20))
     return {"access_token": token, "token_type": "bearer"}

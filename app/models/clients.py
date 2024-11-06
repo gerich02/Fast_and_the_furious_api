@@ -1,6 +1,5 @@
-from sqlalchemy import Column, Float, Integer, String, Date, func
-
 from database import Base
+from sqlalchemy import Column, Date, Float, Integer, String, func
 
 
 class Client(Base):

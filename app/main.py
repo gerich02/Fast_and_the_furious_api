@@ -1,9 +1,8 @@
+from auth import auth as AuthRouter
+from database import Base, engine
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-
-from database import engine, Base
 from routers import client as ClientRouter
-from auth import auth as AuthRouter
 
 Base.metadata.create_all(bind=engine)
 
